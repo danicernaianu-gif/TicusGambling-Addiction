@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selector Turing — Loto 6/49</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-faint: #7a7874;
+    --rule: #dddbd5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 32px 96px;
+  }
+
+  /* HEADER */
+  header { margin-bottom: 56px; }
+
+  .wordmark {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-weight: 300;
+    font-size: clamp(26px, 5vw, 40px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .desc {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    max-width: 500px;
+  }
+
+  /* BUTTON */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: none;
+    padding: 13px 26px;
+    cursor: pointer;
+    margin: 40px 0 48px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.75; }
+  .btn:active { transform: scale(0.985); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .dot {
+    width: 5px; height: 5px;
+    background: #fff;
+    border-radius: 50%;
+    display: none;
+  }
+  .btn.running .dot {
+    display: block;
+    animation: blink 0.9s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+  /* BOARDS */
+  .boards { display: flex; flex-direction: column; }
+
+  .board-row {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 0 22px;
+    align-items: start;
+    padding: 20px 0;
+    border-top: 1px solid var(--rule);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .board-row:last-child { border-bottom: 1px solid var(--rule); }
+  .board-row.on { opacity: 1; transform: translateY(0); }
+
+  .lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    padding-top: 11px;
+  }
+
+  .board-inner { display: flex; flex-direction: column; gap: 12px; }
+
+  .balls { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  .ball {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    transition: border-color 0.15s;
+  }
+  .ball:hover { border-color: var(--ink); }
+
+  /* ODDS STRIP */
+  .odds { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px 3px 5px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--surface);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  .swatch {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .chip-pct { color: var(--ink); }
+
+  /* LUCK VECTOR */
+  .luck-vector {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .lv-label { color: var(--ink-faint); font-size: 11px; letter-spacing: 0.08em; }
+
+  .lv-vec { display: inline-flex; align-items: center; gap: 2px; }
+
+  .lv-bracket {
+    font-size: 24px;
+    font-weight: 200;
+    line-height: 1;
+    color: var(--ink-faint);
+    position: relative;
+    top: 1px;
+  }
+
+  .lv-col {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 0 4px;
+  }
+
+  .lv-row { display: flex; align-items: baseline; gap: 3px; }
+  .lv-val { color: var(--ink); font-size: 11px; }
+  .lv-sub { color: var(--ink-faint); font-size: 10px; }
+  .lv-sep { color: var(--rule); font-size: 14px; }
+  .lv-mag { color: var(--ink-faint); font-size: 11px; }
+  .lv-mag-val { color: var(--ink); font-size: 12px; font-weight: 500; }
+
+  /* LEGEND */
+  .legend {
+    margin-top: 52px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    padding: 24px 28px;
+  }
+
+  .legend-head {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 20px;
+  }
+
+  .legend-rows {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 11px 32px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .legend-swatch {
+    width: 24px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-name { font-size: 13px; font-weight: 400; color: var(--ink-soft); flex: 1; }
+
+  .legend-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    text-align: right;
+  }
+
+  /* METHOD */
+  .method {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 40px;
+  }
+  @media(max-width:480px){ .method { grid-template-columns: 1fr; } }
+
+  .m-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+
+  .m-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .m-note { font-size: 13px; font-weight: 400; color: var(--ink-soft); line-height: 1.65; }
+
+  /* FOOTER */
+  footer {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .f-l {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+
+  .f-r { font-size: 12px; color: var(--ink-faint); font-style: italic; }
+
+  .empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    padding: 28px 0;
+    border-top: 1px solid var(--rule);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="wordmark">Selector Turing &nbsp;·&nbsp; Loteria Romana Loto 6 / 49</p>
+    <h1>Selectie numerica<br>prin probabilitate ponderata</h1>
+    <p class="desc">Numerele sunt generate printr-un model de ponderare ajustat pentru bias. Numerele preferate de oameni — zile de nastere (1–31), multiplii de 7, cifre rotunde — sunt sub-ponderate pentru a reduce impartirea jackpotului. Sansele de castig raman neschimbate. Partea ta, daca castigi, creste.</p>
+  </header>
+
+  <button class="btn" id="genBtn" onclick="generate()">
+    <span class="dot"></span>
+    <span id="btnLabel">Genereaza selectii</span>
+  </button>
+
+  <div class="boards" id="boards">
+    <p class="empty">Apasa genereaza pentru a produce selectiile.</p>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <p class="legend-head">Probabilitatea castigului pe categorie &mdash; per varianta jucata</p>
+    <div class="legend-rows">
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#e8e4a0"></div>
+        <span class="legend-name">Categoria IV — 3 numere</span>
+        <span class="legend-pct">1.7544%</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#e8c99a"></div>
+        <span class="legend-name">Categoria III — 4 numere</span>
+        <span class="legend-pct">0.0969%</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#e8b0a0"></div>
+        <span class="legend-name">Categoria II — 5 numere</span>
+        <span class="legend-pct">0.00185%</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#c9b0d8"></div>
+        <span class="legend-name">Categoria I — Jackpot (6 numere)</span>
+        <span class="legend-pct">0.00000715%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- METHOD -->
+  <div class="method">
+    <div>
+      <p class="m-label">Fond de numere</p>
+      <p class="m-val">1 – 49, selectie 6</p>
+      <p class="m-note">7 variante generate per sesiune.</p>
+    </div>
+    <div>
+      <p class="m-label">Total combinatii</p>
+      <p class="m-val">13,983,816</p>
+      <p class="m-note">C(49,6). Fiecare combinatie este egal probabila.</p>
+    </div>
+    <div>
+      <p class="m-label">Reducere bias</p>
+      <p class="m-val">–38% pondere pe 1–31</p>
+      <p class="m-note">Zile de nastere, multiplii de 7 si cifrele rotunde sunt sub-ponderate.</p>
+    </div>
+    <div>
+      <p class="m-label">Efect net</p>
+      <p class="m-val">Mai putini co-castigatori</p>
+      <p class="m-note">Probabilitatea de a castiga ramane neschimbata. Probabilitatea impartirii premiului scade.</p>
+    </div>
+    <div>
+      <p class="m-label">Vectorul norocului</p>
+      <p class="m-val">L&#x20D7; = (P<sub>castig</sub>, P<sub>solo</sub>)</p>
+      <p class="m-note">P<sub>castig</sub> este fix la 1/13,983,816. P<sub>solo</sub> variaza in functie de numerele generate. |L&#x20D7;| este singura valoare care se schimba intre variante.</p>
+    </div>
+    <div>
+      <p class="m-label">Trageri</p>
+      <p class="m-val">Joi si Duminica</p>
+      <p class="m-note">Ora 18:15, Loteria Romana. Vanzarile se opresc la 17:45.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span class="f-l">A. M. Turing &nbsp;·&nbsp; Model probabilistic &nbsp;·&nbsp; D. Rams &nbsp;·&nbsp; Principii de design</span>
+    <span class="f-r">Niciun sistem nu poate prezice evenimente aleatoare independente.</span>
+  </footer>
+
+</div>
+
+<script>
+// Romanian 6/49 odds as percentages
+const ODDS = [
+  { label: 'Cat.IV', pct: '1.7544%',      color: '#e8e4a0' },
+  { label: 'Cat.III', pct: '0.0969%',     color: '#e8c99a' },
+  { label: 'Cat.II',  pct: '0.00185%',    color: '#e8b0a0' },
+  { label: 'Cat.I',   pct: '0.00000715%', color: '#c9b0d8' },
+];
+
+// Total combinations C(49,6) = 13,983,816
+const TOTAL_COMBOS = 13983816;
+
+// Turing weights — pool 1–49
+function turingWeights() {
+  return Array.from({ length: 49 }, (_, i) => {
+    const n = i + 1;
+    let w = 1.0;
+    if (n <= 31) w *= 0.62;
+    if (n % 7 === 0) w *= 0.78;
+    if (n % 10 === 0) w *= 0.72;
+    if (n % 10 === 1) w *= 0.83;
+    if (n > 31 && n % 10 !== 0 && n % 10 !== 5 && n % 7 !== 0) w *= 1.38;
+    return { n, w };
+  });
+}
+
+function weightedSample(weights, k) {
+  const pool = [...weights];
+  const out = [];
+  for (let i = 0; i < k; i++) {
+    const total = pool.reduce((s, x) => s + x.w, 0);
+    let r = Math.random() * total;
+    for (let j = 0; j < pool.length; j++) {
+      r -= pool[j].w;
+      if (r <= 0) { out.push(pool[j].n); pool.splice(j, 1); break; }
+    }
+  }
+  return out.sort((a, b) => a - b);
+}
+
+function luckVector(nums) {
+  const pWin = 1 / TOTAL_COMBOS;
+  const humanFavoured = nums.filter(n =>
+    n <= 31 || n % 7 === 0 || n % 10 === 0
+  ).length;
+  const pNoSplit = 0.60 + (6 - humanFavoured) / 6 * 0.32;
+  const mag = Math.sqrt(pWin * pWin + pNoSplit * pNoSplit);
+  return {
+    pWin: pWin.toExponential(3),
+    pNoSplit: (pNoSplit * 100).toFixed(1),
+    mag: mag.toFixed(8),
+  };
+}
+
+function generate() {
+  const btn = document.getElementById('genBtn');
+  btn.classList.add('running');
+  btn.disabled = true;
+
+  const container = document.getElementById('boards');
+  container.innerHTML = '';
+
+  ['A','B','C','D','E','F','G'].forEach((label, i) => {
+    const nums = weightedSample(turingWeights(), 6);
+
+    const row = document.createElement('div');
+    row.className = 'board-row';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = label;
+
+    const inner = document.createElement('div');
+    inner.className = 'board-inner';
+
+    const balls = document.createElement('div');
+    balls.className = 'balls';
+    nums.forEach(n => {
+      const b = document.createElement('div');
+      b.className = 'ball';
+      b.textContent = String(n).padStart(2, '0');
+      balls.appendChild(b);
+    });
+
+    const odds = document.createElement('div');
+    odds.className = 'odds';
+    ODDS.forEach(o => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.innerHTML = `<span class="swatch" style="background:${o.color}"></span>${o.label}&nbsp;<span class="chip-pct">${o.pct}</span>`;
+      odds.appendChild(chip);
+    });
+
+    // Luck vector
+    const lv = luckVector(nums);
+    const lvDiv = document.createElement('div');
+    lvDiv.className = 'luck-vector';
+    lvDiv.innerHTML = `
+      <span class="lv-label">L&#x20D7;&nbsp;=</span>
+      <span class="lv-vec">
+        <span class="lv-bracket">(</span>
+        <span class="lv-col">
+          <span class="lv-row"><span class="lv-val">${lv.pWin}</span><span class="lv-sub">&nbsp;P(castig)</span></span>
+          <span class="lv-row"><span class="lv-val">${lv.pNoSplit}%</span><span class="lv-sub">&nbsp;P(solo)</span></span>
+        </span>
+        <span class="lv-bracket">)</span>
+      </span>
+      <span class="lv-sep">·</span>
+      <span class="lv-mag">|L&#x20D7;|&nbsp;=&nbsp;<span class="lv-mag-val">${lv.mag}</span></span>
+    `;
+
+    inner.appendChild(balls);
+    inner.appendChild(odds);
+    inner.appendChild(lvDiv);
+    row.appendChild(lbl);
+    row.appendChild(inner);
+    container.appendChild(row);
+
+    setTimeout(() => row.classList.add('on'), i * 80 + 50);
+  });
+
+  setTimeout(() => {
+    btn.classList.remove('running');
+    btn.disabled = false;
+    document.getElementById('btnLabel').textContent = 'Regenereaza';
+  }, 7 * 80 + 200);
+}
+</script>
+</body>
+</html>
